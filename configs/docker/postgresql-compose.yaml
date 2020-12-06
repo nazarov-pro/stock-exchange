@@ -1,0 +1,16 @@
+version: "3"
+services:
+  exchange_db:
+    container_name: exchange_db
+    image: postgres:12
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - exchange_db_data:/var/lib/postgresql/data
+
+volumes:
+  exchange_db_data:
+    driver: local

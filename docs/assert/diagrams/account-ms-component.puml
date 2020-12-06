@@ -1,0 +1,32 @@
+@startuml
+
+package "Environment" as env {
+
+    queue "Kafka" as queue {
+        component "E-Mail Queue" as email_queue
+    }
+
+    database "PostgreSQL" as rdbms {
+        component "Account DB" as acc_db
+    }
+
+    package "Internal Apps" as internal {  
+
+        component "Account" as acc <<Microservice>> {
+            
+            interface "Registration" as acc_reg
+            note top of acc_reg : HTTP Endpoint, No Auth
+
+            interface "Email Activation" as acc_activate
+            note top of acc_activate : HTTP Endpoint, No Auth
+        }
+        
+    }
+}
+
+acc_reg ..> acc_db : 1.1. Save user if username\n and email isn't taken
+acc_reg ..> email_queue : 1.2. Send a message(with activation link)\n to the email after\n account saved on the database
+
+acc_activate ..> acc_db : 2.1. If activation request\n is valid update account's status to active
+
+@enduml

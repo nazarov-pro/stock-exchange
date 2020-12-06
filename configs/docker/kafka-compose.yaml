@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  zoo:
+    container_name: zookeeper
+    image: zookeeper:3.4.9
+    network_mode: host
+    restart: always
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_PORT: 2181
+    volumes:
+      - zoo_data:/data
+      - zoo_log:/datalog
+
+  kafka:
+    container_name: kafka
+    image: confluentinc/cp-kafka:5.0.0
+    network_mode: host
+    restart: always
+    environment:
+      KAFKA_MESSAGE_MAX_BYTES: 52428800
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      # KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
+      # KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: "localhost:2181"
+      KAFKA_BROKER_ID: 1
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    depends_on:
+      - zoo
+volumes:
+  kafka_data:
+    driver: local
+  zoo_data:
+    driver: local
+  zoo_log:
+    driver: local
