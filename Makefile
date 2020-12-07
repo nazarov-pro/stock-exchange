@@ -2,13 +2,26 @@ account-run:
 	go run "github.com/nazarov-pro/stock-exchange/services/account/cmd"
 	
 upgrade-db-accounts:
-	migrate -verbose -path "./services/account/db/migrations" -database "postgresql://postgres:secret@localhost:5432/postgres?sslmode=disable" up
+	migrate -verbose -path "./services/account/db/migrations" -database "postgresql://postgres:secret@localhost:5432/postgres?sslmode=disable&x-migrations-table=account_migrations" up
 
 downgrade-db-accounts:
-	migrate -verbose -path "./services/account/db/migrations" -database "postgresql://postgres:secret@localhost:5432/postgres?sslmode=disable" down
+	migrate -verbose -path "./services/account/db/migrations" -database "postgresql://postgres:secret@localhost:5432/postgres?sslmode=disable&x-migrations-table=account_migrations" down
 
 compile-account-pb:
 	protoc -I="./services/account/pb" --go_out=./ ./services/account/pb/email.proto
+
+email-run:
+	CONFIG_FILE="./services/email-sender/config-sensitive.yaml" go run "github.com/nazarov-pro/stock-exchange/services/email-sender/cmd"
+	
+upgrade-db-email:
+	migrate -verbose -path "./services/email-sender/db/migrations" -database "postgresql://postgres:secret@localhost:5432/postgres?sslmode=disable&x-migrations-table=email_migrations" up
+
+downgrade-db-email:
+	migrate -verbose -path "./services/email-sender/db/migrations" -database "postgresql://postgres:secret@localhost:5432/postgres?sslmode=disable&x-migrations-table=email_migrations" down
+
+compile-email-pb:
+	protoc -I="./services/email-sender/pb" --go_out=./ ./services/email-sender/pb/email.proto
+
 
 start-db:
 	docker-compose -f configs/docker/postgresql-compose.yaml up -d

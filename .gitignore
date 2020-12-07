@@ -17,3 +17,5 @@ server
 *.out
 # IDE
 .idea
+
+**/config-sensitive.yaml

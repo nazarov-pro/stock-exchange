@@ -23,6 +23,7 @@ type SimpleService struct {
 
 // New creating a new instance of SimpleService
 func New(repo account.Repository, logger log.Logger) account.Service {
+	kafka.CreateTopics()
 	return &SimpleService{
 		repository: repo,
 		logger:     logger,
@@ -81,6 +82,7 @@ func (svc *SimpleService) Register(ctx context.Context, req *account.RegisterAcc
 
 	err = kafka.SendEmail(acc.Email, data)
 	if err != nil {
+		level.Error(logger).Log("err", err)
 		return nil, err
 	}
 

@@ -1,0 +1,29 @@
+profile: "dev"
+
+app:
+  name: "Email_Sender"
+
+db:
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "secret"
+  database: "postgres"
+
+kafka:
+  admin:
+    network: "tcp"
+    address: "localhost:9092"
+  producer:
+    brokerUrls: ["localhost:9092"]
+  consumer:
+    brokerUrls: ["localhost:9092"]
+
+mail:
+  sender:
+    name: "Stock Exchange APP"
+    email: "sender_email"
+  smtp:
+    server: "smtp.com:465"
+    username: "username"
+    password: "password"
