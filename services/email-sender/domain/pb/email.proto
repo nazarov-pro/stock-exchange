@@ -2,7 +2,7 @@ syntax="proto3";
 
 package pb.email;
 
-option go_package = "services/email-sender/pb";
+option go_package = "services/email-sender/domain/pb";
 
 message SendEmail {
     repeated string recipients = 1;

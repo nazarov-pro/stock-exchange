@@ -5,14 +5,14 @@ import (
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/nazarov-pro/stock-exchange/services/email-sender/config"
-	"github.com/nazarov-pro/stock-exchange/services/email-sender/pb"
-	"github.com/nazarov-pro/stock-exchange/services/email-sender"
+	"github.com/nazarov-pro/stock-exchange/services/email-sender/internal/config"
+	"github.com/nazarov-pro/stock-exchange/services/email-sender/domain/pb"
+	"github.com/nazarov-pro/stock-exchange/services/email-sender/domain"
 
 )
 
 // ConsumeEmails kafka email consumers
-func ConsumeEmails(svc email.Service) {
+func ConsumeEmails(svc domain.Service) {
 	r := config.NewReader("email", "email-consumer")
 	defer r.Close()
 
@@ -28,11 +28,11 @@ func ConsumeEmails(svc email.Service) {
 		if err != nil {
 			fmt.Printf("Something went wrong err: %v", err)
 		} else {
-			status := email.Sent
+			status := domain.Sent
 			sender, err := svc.Send(ctx, &msg)
 			if err != nil {
 				fmt.Errorf("Error occurred, %v", err)
-				status = email.Failed
+				status = domain.Failed
 			}
 
 			err = svc.Save(ctx, &msg, sender, status)

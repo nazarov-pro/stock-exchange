@@ -1,4 +1,4 @@
-package repository
+package repo
 
 import (
 	"database/sql"
@@ -11,15 +11,15 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 
-	"github.com/nazarov-pro/stock-exchange/services/email-sender"
+	"github.com/nazarov-pro/stock-exchange/services/email-sender/domain"
 )
 
 func TestInsert(t *testing.T) {
-	msg := email.EmailMessage{
+	msg := domain.Message{
 		Content:     "cnt",
 		Subject:     "sbj",
 		Sender:      "sender",
-		Status:      email.SENT,
+		Status:      domain.Sent,
 		CreatedDate: 0,
 		Recipients:  []string{"1", "2"},
 	}

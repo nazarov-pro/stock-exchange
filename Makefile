@@ -20,7 +20,7 @@ downgrade-db-email:
 	migrate -verbose -path "./services/email-sender/db/migrations" -database "postgresql://postgres:secret@localhost:5432/postgres?sslmode=disable&x-migrations-table=email_migrations" down
 
 compile-email-pb:
-	protoc -I="./services/email-sender/pb" --go_out=./ ./services/email-sender/pb/email.proto
+	protoc -I="./services/email-sender/domain/pb" --go_out=./ ./services/email-sender/domain/pb/email.proto
 
 
 start-db:
@@ -34,3 +34,9 @@ start-kafka:
 
 stop-kafka:
 	docker-compose -f configs/docker/kafka-compose.yaml down
+
+start-external: start-db start-kafka
+	echo "DB & KAFKA STARTED"
+
+stop-external: stop-db stop-kafka
+	echo "DB & KAFKA STOPPED"

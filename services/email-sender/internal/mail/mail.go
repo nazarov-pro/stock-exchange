@@ -8,8 +8,8 @@ import (
 	"net/mail"
 	"net/smtp"
 
-	"github.com/nazarov-pro/stock-exchange/services/email-sender/config"
-	"github.com/nazarov-pro/stock-exchange/services/email-sender/pb"
+	"github.com/nazarov-pro/stock-exchange/services/email-sender/internal/config"
+	"github.com/nazarov-pro/stock-exchange/services/email-sender/domain/pb"
 )
 
 // SendEmail sending email

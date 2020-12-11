@@ -3,7 +3,7 @@ package mail
 import (
 	"testing"
 
-	"github.com/nazarov-pro/stock-exchange/services/email-sender/pb"
+	"github.com/nazarov-pro/stock-exchange/services/email-sender/domain/pb"
 )
 
 func TestSendEmail(t *testing.T) {
@@ -12,7 +12,7 @@ func TestSendEmail(t *testing.T) {
 		Subject:    "Test",
 		Recipients: []string{"me@shahinnazarov.com", "payday@shahinnazarov.com"},
 	}
-	err := SendEmail(emailMsg)
+	_, err := SendEmail(emailMsg)
 	if err != nil {
 		t.Fatalf("Error occured while sending email, %v", err)
 	}

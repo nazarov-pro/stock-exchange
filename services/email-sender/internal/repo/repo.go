@@ -1,4 +1,4 @@
-package repository
+package repo
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/go-kit/kit/log"
-	"github.com/nazarov-pro/stock-exchange/services/email-sender"
+	"github.com/nazarov-pro/stock-exchange/services/email-sender/domain"
 )
 
 // PgRepository represents PostgreSql repository
@@ -16,7 +16,7 @@ type PgRepository struct {
 }
 
 // New created a new repository backed by postgressql
-func New(db *sql.DB, logger log.Logger) (email.Repository, error) {
+func New(db *sql.DB, logger log.Logger) (domain.Repository, error) {
 	return &PgRepository{
 		db:     db,
 		logger: log.With(logger, "repo", "postgresql"),
@@ -24,7 +24,7 @@ func New(db *sql.DB, logger log.Logger) (email.Repository, error) {
 }
 
 // Insert inserting to the db
-func (repo *PgRepository) Insert(ctx context.Context, msg *email.Message) error {
+func (repo *PgRepository) Insert(ctx context.Context, msg *domain.Message) error {
 	tx, err := repo.db.Begin()
 	if err != nil {
 		return err

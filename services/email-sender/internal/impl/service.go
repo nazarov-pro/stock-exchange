@@ -1,23 +1,23 @@
-package implementation
+package impl
 
 import (
 	"context"
 	"github.com/go-kit/kit/log"
 
 	"github.com/nazarov-pro/stock-exchange/pkg/util/time"
-	"github.com/nazarov-pro/stock-exchange/services/email-sender"
-	"github.com/nazarov-pro/stock-exchange/services/email-sender/pb"
-	"github.com/nazarov-pro/stock-exchange/services/email-sender/mail"
+	"github.com/nazarov-pro/stock-exchange/services/email-sender/domain"
+	"github.com/nazarov-pro/stock-exchange/services/email-sender/domain/pb"
+	"github.com/nazarov-pro/stock-exchange/services/email-sender/internal/mail"
 )
 
 // SimpleService represents default service for email
 type SimpleService struct {
-	repo   email.Repository
+	repo   domain.Repository
 	logger log.Logger
 }
 
 // New creates a new instance of Service
-func New(repo email.Repository, logger log.Logger) email.Service {
+func New(repo domain.Repository, logger log.Logger) domain.Service {
 	return &SimpleService{
 		repo: repo,
 		logger: logger,
@@ -26,8 +26,8 @@ func New(repo email.Repository, logger log.Logger) email.Service {
 
 // Save saving message to the database
 func (svc *SimpleService) Save(ctx context.Context, msg *pb.SendEmail, 
-	sender string, status email.Status) error {
-	message := &email.Message{
+	sender string, status domain.Status) error {
+	message := &domain.Message{
 		Content: msg.Content,
 		Recipients: msg.Recipients,
 		Sender: sender,

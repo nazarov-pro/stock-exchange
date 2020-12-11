@@ -1,8 +1,8 @@
-package email
+package domain
 
 import (
 	"context"
-	"github.com/nazarov-pro/stock-exchange/services/email-sender/pb"
+	"github.com/nazarov-pro/stock-exchange/services/email-sender/domain/pb"
 )
 
 // Status represents status of the email message
