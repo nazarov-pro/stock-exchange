@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
-	"time"
+	"os/signal"
+	"syscall"
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
@@ -37,9 +39,16 @@ func main() {
 		)
 	}
 
+	errs := make(chan error)
+	c := make(chan os.Signal, 1)
+	go func() {
+		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+		errs <- fmt.Errorf("%s", <-c)
+	}()
+
 	closeFunc := func () {
 		level.Info(logger).Log("msg", "stopped")
-		time.Sleep(5 * time.Second)
+		signal.Stop(c)
 	}
 
 	defer closeFunc()
@@ -48,6 +57,14 @@ func main() {
 	db, _ := sql.Open("postgres", psqlInfo)
 	repo, _ := repo.New(db, logger)
 	svc := impl.New(repo, logger)
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
 
-	consumer.ConsumeEmails(svc)
+	go consumer.ConsumeEmails(svc, ctx)
+	go consumer.ConsumeEmails(svc, ctx)
+
+
+	err := <-errs
+	cancel()
+	level.Error(logger).Log("exit", err)
 }

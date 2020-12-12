@@ -12,32 +12,33 @@ import (
 )
 
 // ConsumeEmails kafka email consumers
-func ConsumeEmails(svc domain.Service) {
+func ConsumeEmails(svc domain.Service, ctx context.Context) {
 	r := config.NewReader("email", "email-consumer")
-	defer r.Close()
+	defer func() {
+		fmt.Printf("Reader closing err: %v \n", r.Close())
+	}()
 
 	for {
-		ctx := context.Background()
 		m, err := r.ReadMessage(ctx)
 		if err != nil {
-			fmt.Printf("Something went wrong err: %v", err)
+			fmt.Printf("Something went wrong err: %v\n", err)
 			break
 		}
 		var msg pb.SendEmail
 		err = proto.Unmarshal(m.Value, &msg)
 		if err != nil {
-			fmt.Printf("Something went wrong err: %v", err)
+			fmt.Printf("Something went wrong err: %v\n", err)
 		} else {
 			status := domain.Sent
 			sender, err := svc.Send(ctx, &msg)
 			if err != nil {
-				fmt.Errorf("Error occurred, %v", err)
+				fmt.Printf("Error occurred, %v\n", err)
 				status = domain.Failed
 			}
 
 			err = svc.Save(ctx, &msg, sender, status)
 			if err != nil {
-				fmt.Errorf("Error occurred, %v", err)
+				fmt.Printf("Error occurred, %v\n", err)
 			}
 		}
 		fmt.Printf("message at offset %d: key: %s \n", m.Offset, string(m.Key))
