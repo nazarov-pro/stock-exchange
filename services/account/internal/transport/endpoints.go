@@ -7,7 +7,7 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	validate "github.com/go-playground/validator/v10"
 	"github.com/nazarov-pro/stock-exchange/pkg/container"
-	"github.com/nazarov-pro/stock-exchange/services/account"
+	"github.com/nazarov-pro/stock-exchange/services/account/domain"
 )
 
 var (
@@ -73,16 +73,16 @@ type Endpoints struct {
 }
 
 // MakeEndpoints initializes all go kit endpoints for account service
-func MakeEndpoints(svc *account.Service) Endpoints {
+func MakeEndpoints(svc *domain.Service) Endpoints {
 	return Endpoints{
 		RegisterAccount: makeRegisterAccountEndpoint(svc),
 		ActivateAccount: makeActivateAccountEndpoint(svc),
 	}
 }
 
-func makeActivateAccountEndpoint(svc *account.Service) endpoint.Endpoint {
+func makeActivateAccountEndpoint(svc *domain.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(account.ActivateAccountRequest)
+		req := request.(domain.ActivateAccountRequest)
 		err := validator.Struct(req)
 		if err != nil {
 			for _, e := range err.(validate.ValidationErrors) {
@@ -91,15 +91,15 @@ func makeActivateAccountEndpoint(svc *account.Service) endpoint.Endpoint {
 		}
 		err = (*svc).Activate(ctx, &req)
 		if err == nil {
-			return account.ActivateAccountResponse{
+			return domain.ActivateAccountResponse{
 				APIResponse: &container.APIResponse{
-					Status:     "Activation link will be send the email.",
+					Status:     "Your account activated successfully.",
 					Successful: true,
 				},
 			}, nil
 		}
 
-		return account.ActivateAccountResponse{
+		return domain.ActivateAccountResponse{
 			APIResponse: &container.APIResponse{
 				Status:     "Operation was failed",
 				Successful: false,
@@ -112,9 +112,9 @@ func makeActivateAccountEndpoint(svc *account.Service) endpoint.Endpoint {
 	}
 }
 
-func makeRegisterAccountEndpoint(svc *account.Service) endpoint.Endpoint {
+func makeRegisterAccountEndpoint(svc *domain.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(account.RegisterAccountRequest)
+		req := request.(domain.RegisterAccountRequest)
 		err := validator.Struct(req)
 		if err != nil {
 			for _, e := range err.(validate.ValidationErrors) {
@@ -124,14 +124,14 @@ func makeRegisterAccountEndpoint(svc *account.Service) endpoint.Endpoint {
 
 		_, err = (*svc).Register(ctx, &req)
 		if err == nil {
-			return account.RegisterAccountResponse{
+			return domain.RegisterAccountResponse{
 				APIResponse: &container.APIResponse{
 					Status:     "Activation link will be send the email.",
 					Successful: true,
 				},
 			}, nil
 		}
-		return account.RegisterAccountResponse{
+		return domain.RegisterAccountResponse{
 			APIResponse: &container.APIResponse{
 				Status:     "Operation was failed",
 				Successful: false,

@@ -15,8 +15,9 @@ func newDialer() *kafka.Dialer {
 	}
 }
 
+// NewWriter creates new writer for the kafka producer
 func NewWriter(topicName string) *kafka.Writer {
-	brokerUrls := []string{"127.0.0.1:9092"}
+	brokerUrls := Config.GetStringSlice("kafka.producer.brokerUrls")
 	w := kafka.NewWriter(kafka.WriterConfig{
 		Brokers:  brokerUrls,
 		Topic:    topicName,
@@ -26,19 +27,22 @@ func NewWriter(topicName string) *kafka.Writer {
 	return w
 }
 
-func NewReader(topicName string, groupId string) *kafka.Reader {
-	brokerUrls := []string{"127.0.0.1:9092"}
+// NewReader creates new reader for the kafka consumer
+func NewReader(topicName string, groupID string) *kafka.Reader {
+	brokerUrls := Config.GetStringSlice("kafka.consumer.brokerUrls")
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: brokerUrls,
-		GroupID: groupId,
+		GroupID: groupID,
 		Topic:   topicName,
 		Dialer:  dialer,
 	})
 	return r
 }
 
+// CreateTopic creates kafka topics regrading topic name, partitions, replicas
 func CreateTopic(topicName string, partitions int, replicas int) error {
-	conn, err := kafka.Dial("tcp", "localhost:9092")
+	conn, err := kafka.Dial(Config.GetString("kafka.admin.network"),
+		Config.GetString("kafka.admin.address"))
 	if err != nil {
 		return err
 	}

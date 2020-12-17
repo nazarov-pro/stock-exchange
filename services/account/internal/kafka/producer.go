@@ -2,17 +2,19 @@ package kafka
 
 import(
 	"context"
-	"github.com/nazarov-pro/stock-exchange/services/account/config"
 	"github.com/segmentio/kafka-go"
+	"github.com/nazarov-pro/stock-exchange/services/account/internal/config"
+
 )
 
+// CreateTopics creating topics
 func CreateTopics() {
-	config.CreateTopic("email", 1, 1)
+	config.CreateTopic(config.Config.GetString("kafka.topics.email-send"), 1, 1)
 }
 
-
+// SendEmail sening email to specific topic
 func SendEmail(key string, val []byte) (error) {
-	w := config.NewWriter("email")
+	w := config.NewWriter(config.Config.GetString("kafka.topics.email-send"))
 	defer w.Close()
 	err := w.WriteMessages(
 		context.Background(),

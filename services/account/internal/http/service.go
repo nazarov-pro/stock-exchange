@@ -9,9 +9,9 @@ import (
 	"github.com/go-kit/kit/log"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
-	"github.com/nazarov-pro/stock-exchange/services/account/transport"
 	"github.com/nazarov-pro/stock-exchange/pkg/container"
-	"github.com/nazarov-pro/stock-exchange/services/account"
+	"github.com/nazarov-pro/stock-exchange/services/account/domain"
+	"github.com/nazarov-pro/stock-exchange/services/account/internal/transport"
 )
 
 // NewService wires Go kit endpoints to the HTTP transport.
@@ -48,7 +48,7 @@ func NewService(
 }
 
 func decodeActivateAccountRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
-	var req account.ActivateAccountRequest
+	var req domain.ActivateAccountRequest
 	vals := r.URL.Query()
 	req.Email = vals.Get("email")
 	req.ActivationCode = vals.Get("activationCode")
@@ -56,7 +56,7 @@ func decodeActivateAccountRequest(_ context.Context, r *http.Request) (request i
 }
 
 func decodeRegisterRequest(_ context.Context, r *http.Request) (request interface{}, err error) {
-	var req account.RegisterAccountRequest
+	var req domain.RegisterAccountRequest
 	if e := json.NewDecoder(r.Body).Decode(&req); e != nil {
 		return nil, e
 	}

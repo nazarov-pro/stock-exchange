@@ -1,4 +1,4 @@
-package account
+package domain
 
 import (
 	"context"
@@ -51,4 +51,12 @@ type Repository interface {
 	Create(ctx context.Context, acc *Account) error
 
 	UpdateStatus(ctx context.Context, email string, activationCode string, fromStatus Status, toStatus Status) error
+}
+
+// Service - Registration, Resetting password and activating account
+type Service interface {
+	Register(ctx context.Context, req* RegisterAccountRequest) (*Account, error)
+
+	Activate(ctx context.Context, req* ActivateAccountRequest) error
+	// Reset password and activate/deactivate/suspend/delete 
 }

@@ -15,17 +15,28 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"github.com/nazarov-pro/stock-exchange/services/account"
-	accountsvc "github.com/nazarov-pro/stock-exchange/services/account/implementation"
-	"github.com/nazarov-pro/stock-exchange/services/account/repository"
-	"github.com/nazarov-pro/stock-exchange/services/account/transport"
-	httptransport "github.com/nazarov-pro/stock-exchange/services/account/transport/http"
+	"github.com/nazarov-pro/stock-exchange/services/account/domain"
+	"github.com/nazarov-pro/stock-exchange/services/account/internal/config"
+	accountsvc "github.com/nazarov-pro/stock-exchange/services/account/internal/impl"
+	"github.com/nazarov-pro/stock-exchange/services/account/internal/repo"
+	"github.com/nazarov-pro/stock-exchange/services/account/internal/transport"
+	httptransport "github.com/nazarov-pro/stock-exchange/services/account/internal/http"
 )
 
 func main() {
-	var (
-		httpAddr = "127.0.0.1:8080"
+	config := config.Config
+	httpAddr := fmt.Sprintf(
+		"%s:%d", 
+		config.GetString("server.hostname"), config.GetInt("server.port"),
 	)
+	psqlInfo := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		config.GetString("db.host"), config.GetInt("db.port"), 
+		config.GetString("db.user"), config.GetString("db.password"), 
+		config.GetString("db.database"),
+	)
+	appName := config.GetString("app.name")
+
 	// initialize our structured logger for the service
 	var logger log.Logger
 	{
@@ -33,7 +44,7 @@ func main() {
 		logger = log.NewSyncLogger(logger)
 		logger = level.NewFilter(logger, level.AllowDebug())
 		logger = log.With(logger,
-			"svc", "account",
+			"svc", appName,
 			"ts", log.DefaultTimestampUTC,
 			"clr", log.DefaultCaller,
 		)
@@ -46,10 +57,6 @@ func main() {
 	{
 		var err error
 		// Connect to the "ordersdb" database
-		psqlInfo := fmt.Sprintf(
-			"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-			"localhost", 5432, "postgres", "secret", "postgres",
-		)
 		db, err = sql.Open("postgres", psqlInfo)
 
 		if err != nil {
@@ -59,9 +66,9 @@ func main() {
 	}
 
 	// Create Account Service
-	var svc account.Service
+	var svc domain.Service
 	{
-		repository, err := repository.New(db, logger)
+		repository, err := repo.New(db, logger)
 		if err != nil {
 			level.Error(logger).Log("exit", err)
 			os.Exit(-1)

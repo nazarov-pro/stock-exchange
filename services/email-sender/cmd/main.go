@@ -54,8 +54,18 @@ func main() {
 	defer closeFunc()
 
 	level.Info(logger).Log("msg", "started")
-	db, _ := sql.Open("postgres", psqlInfo)
-	repo, _ := repo.New(db, logger)
+	db, err := sql.Open("postgres", psqlInfo)
+	if err != nil {
+		level.Error(logger).Log("err", err)
+		os.Exit(0)
+	}
+
+	repo, err := repo.New(db, logger)
+	if err != nil {
+		level.Error(logger).Log("err", err)
+		os.Exit(0)
+	}
+
 	svc := impl.New(repo, logger)
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
@@ -64,7 +74,7 @@ func main() {
 	go consumer.ConsumeEmails(svc, ctx)
 
 
-	err := <-errs
+	err = <-errs
 	cancel()
 	level.Error(logger).Log("exit", err)
 }

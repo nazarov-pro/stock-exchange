@@ -1,11 +1,11 @@
-package repository
+package repo
 
 import (
 	"context"
 	"database/sql"
 
 	"github.com/go-kit/kit/log"
-	"github.com/nazarov-pro/stock-exchange/services/account"
+	"github.com/nazarov-pro/stock-exchange/services/account/domain"
 )
 
 // PgRepository represents PostgreSql repository
@@ -15,7 +15,7 @@ type PgRepository struct {
 }
 
 // New created a new repository backed by postgressql
-func New(db *sql.DB, logger log.Logger) (account.Repository, error) {
+func New(db *sql.DB, logger log.Logger) (domain.Repository, error) {
 	return &PgRepository{
 		db:     db,
 		logger: log.With(logger, "repo", "postgresql"),
@@ -23,7 +23,7 @@ func New(db *sql.DB, logger log.Logger) (account.Repository, error) {
 }
 
 // Create - inserting a new account to the database
-func (repo *PgRepository) Create(ctx context.Context, acc *account.Account) error {
+func (repo *PgRepository) Create(ctx context.Context, acc *domain.Account) error {
 	sql := `
 			INSERT INTO "ACCOUNT"."ACCOUNTS"("ID", "USERNAME", "EMAIL", "PASSWORD", "STATUS", "ACTIVATION_CODE", "CREATED_DATE")
 			values (nextval('"ACCOUNT"."ACCOUNT_ID_SEQ"'), $1, $2, $3, $4, $5, $6)
@@ -36,7 +36,7 @@ func (repo *PgRepository) Create(ctx context.Context, acc *account.Account) erro
 }
 
 // FindByUsernameOrEmail - Find Account by username or email
-func (repo *PgRepository) FindByUsernameOrEmail(ctx context.Context, username string, email string) (*account.Account, error) {
+func (repo *PgRepository) FindByUsernameOrEmail(ctx context.Context, username string, email string) (*domain.Account, error) {
 	sqlQuery := `
 				SELECT "A"."ID", "A"."USERNAME", "A"."EMAIL", "A"."PASSWORD", 
 				"A"."STATUS", "A"."ACTIVATION_CODE" FROM "ACCOUNT"."ACCOUNTS" "A" 
@@ -44,13 +44,13 @@ func (repo *PgRepository) FindByUsernameOrEmail(ctx context.Context, username st
 	`
 	sqlRow := repo.db.QueryRowContext(ctx, sqlQuery, username, email)
 
-	var acc account.Account
+	var acc domain.Account
 	err := sqlRow.Scan(&acc.ID, &acc.Username, &acc.Email, &acc.Password,
 		&acc.Status, &acc.ActivationCode)
 
 	switch err {
 	case sql.ErrNoRows:
-		return nil, account.ErrAccountNotFound
+		return nil, domain.ErrAccountNotFound
 	case nil:
 		return &acc, nil
 	default:
@@ -60,7 +60,7 @@ func (repo *PgRepository) FindByUsernameOrEmail(ctx context.Context, username st
 
 // UpdateStatus updating account's status
 func (repo *PgRepository) UpdateStatus(ctx context.Context, email string, activationCode string,
-	 fromStatus account.Status, toStatus account.Status) error {
+	 fromStatus domain.Status, toStatus domain.Status) error {
 	sqlQuery := `
 		UPDATE "ACCOUNT"."ACCOUNTS" SET "STATUS"=$1 WHERE 
 		"EMAIL"=$2 AND "ACTIVATION_CODE"=$3 AND "STATUS"=$4
@@ -76,7 +76,7 @@ func (repo *PgRepository) UpdateStatus(ctx context.Context, email string, activa
 	}
 
 	if affectedRows == 0 {
-		return account.ErrAccountNotFound
+		return domain.ErrAccountNotFound
 	}
 	return nil
 }

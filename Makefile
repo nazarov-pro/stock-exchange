@@ -1,5 +1,5 @@
 account-run:
-	go run "github.com/nazarov-pro/stock-exchange/services/account/cmd"
+	CONFIG_FILE="./services/account/config-sensitive.yaml" go run "github.com/nazarov-pro/stock-exchange/services/account/cmd"
 	
 upgrade-db-accounts:
 	migrate -verbose -path "./services/account/db/migrations" -database "postgresql://postgres:secret@localhost:5432/postgres?sslmode=disable&x-migrations-table=account_migrations" up
@@ -8,7 +8,7 @@ downgrade-db-accounts:
 	migrate -verbose -path "./services/account/db/migrations" -database "postgresql://postgres:secret@localhost:5432/postgres?sslmode=disable&x-migrations-table=account_migrations" down
 
 compile-account-pb:
-	protoc -I="./services/account/pb" --go_out=./ ./services/account/pb/email.proto
+	protoc -I="./services/account/domain/pb" --go_out=./ ./services/account/domain/pb/email.proto
 
 email-run:
 	CONFIG_FILE="./services/email-sender/config-sensitive.yaml" go run "github.com/nazarov-pro/stock-exchange/services/email-sender/cmd"
