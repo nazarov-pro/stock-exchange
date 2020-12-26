@@ -1,5 +1,7 @@
 @startuml
 
+skinparam Shadowing false
+
 package "Environment" as env {
 
     queue "Kafka" as queue {

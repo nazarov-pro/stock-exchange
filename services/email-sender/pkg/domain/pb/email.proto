@@ -1,0 +1,12 @@
+syntax="proto3";
+
+package pb.email;
+
+option go_package = "services/email-sender/pkg/domain/pb";
+
+message SendEmail {
+    repeated string recipients = 1;
+    string subject = 2;
+    string content = 4;
+
+}

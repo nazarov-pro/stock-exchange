@@ -2,31 +2,30 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/oklog/run"
+
 	_ "github.com/lib/pq"
-	"github.com/nazarov-pro/stock-exchange/services/email-sender/internal/repo"
-	"github.com/nazarov-pro/stock-exchange/services/email-sender/internal/impl"
-	"github.com/nazarov-pro/stock-exchange/services/email-sender/internal/kafka/consumer"
-	"github.com/nazarov-pro/stock-exchange/services/email-sender/internal/config"
+	"github.com/nazarov-pro/stock-exchange/services/email-sender/pkg/conf"
+	"github.com/nazarov-pro/stock-exchange/services/email-sender/pkg/kafka"
+	"github.com/nazarov-pro/stock-exchange/services/email-sender/pkg/repo"
+	"github.com/nazarov-pro/stock-exchange/services/email-sender/pkg/svc"
 )
 
+var startTime = time.Now()
+
 func main() {
-	config := config.Config
-	
-	psqlInfo := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		config.GetString("db.host"), config.GetInt("db.port"), 
-		config.GetString("db.user"), config.GetString("db.password"), 
-		config.GetString("db.database"),
-	)
+	config := conf.Config
 	appName := config.GetString("app.name")
+
 	var logger log.Logger
 	{
 		logger = log.NewLogfmtLogger(os.Stderr)
@@ -39,42 +38,57 @@ func main() {
 		)
 	}
 
-	errs := make(chan error)
-	c := make(chan os.Signal, 1)
-	go func() {
-		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-		errs <- fmt.Errorf("%s", <-c)
-	}()
-
-	closeFunc := func () {
-		level.Info(logger).Log("msg", "stopped")
-		signal.Stop(c)
-	}
-
-	defer closeFunc()
-
-	level.Info(logger).Log("msg", "started")
-	db, err := sql.Open("postgres", psqlInfo)
+	db, err := conf.ConnectDb()
 	if err != nil {
 		level.Error(logger).Log("err", err)
 		os.Exit(0)
 	}
 
-	repo, err := repo.New(db, logger)
-	if err != nil {
-		level.Error(logger).Log("err", err)
-		os.Exit(0)
-	}
-
-	svc := impl.New(repo, logger)
+	repo := repo.New(db, logger)
+	svc := svc.New(repo, logger)
+	emailConsumer := kafka.NewEmailConsumer(svc)
 	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
 
-	go consumer.ConsumeEmails(svc, ctx)
-	go consumer.ConsumeEmails(svc, ctx)
+	var g run.Group
+	// Signal Catcher
+	{
+		sigChan := make(chan os.Signal)
+		g.Add(func() error {
+			signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+			return fmt.Errorf("%v", <-sigChan)
+		}, func(error) {
+			close(sigChan)
+		})
+	}
 
+	// Email Consumer
+	{
+		ctx, cancel := context.WithCancel(ctx)
+		g.Add(func() error {
+			return emailConsumer.Consume(ctx)
+		}, func(error) {
+			cancel()
+		})
+	}
 
-	err = <-errs
-	cancel()
-	level.Error(logger).Log("exit", err)
+	// Email Consumer 2
+	{
+		ctx, cancel := context.WithCancel(ctx)
+		g.Add(func() error {
+			return emailConsumer.Consume(ctx)
+		}, func(error) {
+			cancel()
+		})
+	}
+
+	pid := os.Getpid()
+	ioutil.WriteFile(appName, []byte(fmt.Sprint(pid)), 0644)
+
+	level.Info(logger).Log("msg", "service started", "startuptime", time.Since(startTime))
+	if err = g.Run(); err != nil {
+		level.Error(logger).Log("err", err)
+	}
+
+	level.Info(logger).Log("msg", "service ended")
+	os.Remove(appName)
 }

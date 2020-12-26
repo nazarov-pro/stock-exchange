@@ -1,0 +1,46 @@
+@startuml
+skinparam Shadowing false
+
+actor "Client" as client
+participant "Wallet API" as wlt_ms
+participant "Wallet SVC" as wlt_svc
+participant "Wallet RF" as wlt_rf
+participant "Wallet Repo" as wlt_repo
+database "Wallet DB" as db
+
+note over of wlt_rf
+Wallet Restriction Filter
+end note
+
+
+group Wallet Creation Flow
+client ->> wlt_ms: 1.0. Create wallet
+wlt_ms ->> wlt_svc: 1.1. Create wallet\n(with VALID input)
+wlt_svc -->> wlt_rf: 1.2. Validate wallet \n creation request
+wlt_svc ->> wlt_repo: 1.3. Save a new wallet (VALID)
+wlt_repo ->> db: 1.4. Insert wallet and\n wallet operation history\n on the database
+client <<- wlt_ms: 1.5. The result of \nthe wallet creation request\n and created wallet
+end
+
+
+group Wallet Credit Flow 'Increasing the balance direct'
+client ->> wlt_ms: 2.0. Wallet Credit Request :\nwallet Id, wallet version,\nreferenceId, accountId\namount, currency
+wlt_ms ->> wlt_svc: 2.1. Wallet Credit Request\n(with VALID input)
+wlt_svc -->> wlt_rf: 2.2. Validate wallet \n credit request
+wlt_svc ->> wlt_repo: 2.3. Update the balance\n of the wallet\n (eligible to update)
+wlt_repo ->> db: 2.4. Try increase wallet's balance and\n insert wallet transaction and wallet operation history\n on the database
+client <<- wlt_ms: 2.5. The result of \nthe credit request\n and updated wallet
+end
+
+group Wallet Debit Flow 'Decreasing the balance direct'
+client ->> wlt_ms: 3.0. Wallet Debit Request :\nwallet Id, wallet version,\nreferenceId, accountId\namount, currency
+wlt_ms ->> wlt_svc: 3.1. Wallet Debit Request\n(with VALID input)
+wlt_svc -->> wlt_rf: 3.2. Validate wallet \n debit request
+wlt_svc ->> wlt_repo: 3.3. Update the balance\n of the wallet\n (eligible to update)
+wlt_repo ->> db: 3.4. Try decrease wallet's balance and\n insert wallet transaction and wallet operation history\n on the database
+client <<- wlt_ms: 3.5. The result of \nthe debit request\n and updated wallet
+
+end
+
+
+@enduml

@@ -1,41 +1,41 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
+	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	_ "github.com/lib/pq"
 
 	kitoc "github.com/go-kit/kit/tracing/opencensus"
 	kithttp "github.com/go-kit/kit/transport/http"
+	"github.com/oklog/run"
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"github.com/nazarov-pro/stock-exchange/services/account/domain"
-	"github.com/nazarov-pro/stock-exchange/services/account/internal/config"
-	accountsvc "github.com/nazarov-pro/stock-exchange/services/account/internal/impl"
-	"github.com/nazarov-pro/stock-exchange/services/account/internal/repo"
-	"github.com/nazarov-pro/stock-exchange/services/account/internal/transport"
-	httptransport "github.com/nazarov-pro/stock-exchange/services/account/internal/http"
+	"github.com/nazarov-pro/stock-exchange/services/account/pkg/conf"
+	httptransport "github.com/nazarov-pro/stock-exchange/services/account/pkg/http"
+	accountsvc "github.com/nazarov-pro/stock-exchange/services/account/pkg/impl"
+	"github.com/nazarov-pro/stock-exchange/services/account/pkg/repo"
+	"github.com/nazarov-pro/stock-exchange/services/account/pkg/transport"
 )
 
+var startTime = time.Now()
+
 func main() {
-	config := config.Config
-	httpAddr := fmt.Sprintf(
-		"%s:%d", 
-		config.GetString("server.hostname"), config.GetInt("server.port"),
+	var (
+		config   = conf.Config
+		httpAddr = fmt.Sprintf(
+			"%s:%d",
+			config.GetString("server.hostname"), config.GetInt("server.port"),
+		)
+		appName = config.GetString("app.name")
 	)
-	psqlInfo := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		config.GetString("db.host"), config.GetInt("db.port"), 
-		config.GetString("db.user"), config.GetString("db.password"), 
-		config.GetString("db.database"),
-	)
-	appName := config.GetString("app.name")
 
 	// initialize our structured logger for the service
 	var logger log.Logger
@@ -50,36 +50,21 @@ func main() {
 		)
 	}
 
-	level.Info(logger).Log("msg", "service started")
-	defer level.Info(logger).Log("msg", "service ended")
-
-	var db *sql.DB
-	{
-		var err error
-		// Connect to the "ordersdb" database
-		db, err = sql.Open("postgres", psqlInfo)
-
-		if err != nil {
-			level.Error(logger).Log("exit", err)
-			os.Exit(-1)
-		}
+	db, err := conf.ConnectDb()
+	if err != nil {
+		level.Error(logger).Log("err", err)
+		os.Exit(-1)
 	}
 
-	// Create Account Service
-	var svc domain.Service
-	{
-		repository, err := repo.New(db, logger)
-		if err != nil {
-			level.Error(logger).Log("exit", err)
-			os.Exit(-1)
-		}
-		svc = accountsvc.New(repository, logger)
+	// Service Initalization
+	repository, err := repo.New(db, logger)
+	if err != nil {
+		level.Error(logger).Log("err", err)
+		os.Exit(-1)
 	}
+	svc := accountsvc.New(repository, logger)
 
-	var endpoints transport.Endpoints
-	{
-		endpoints = transport.MakeEndpoints(&svc)
-	}
+	endpoints := transport.MakeEndpoints(&svc)
 
 	var h http.Handler
 	{
@@ -88,21 +73,36 @@ func main() {
 		h = httptransport.NewService(endpoints, serverOptions, logger)
 	}
 
-	errs := make(chan error)
-	go func() {
-		c := make(chan os.Signal)
-		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-		errs <- fmt.Errorf("%s", <-c)
-	}()
+	var g run.Group
+	// Signal Catcher
+	{
+		sigChan := make(chan os.Signal)
+		g.Add(func() error {
+			signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+			return fmt.Errorf("%v", <-sigChan)
+		}, func(error) {
+			close(sigChan)
+		})
+	}
 
-	go func() {
-		level.Info(logger).Log("transport", "HTTP", "addr", httpAddr)
-		server := &http.Server{
-			Addr:    httpAddr,
-			Handler: h,
-		}
-		errs <- server.ListenAndServe()
-	}()
+	//HTTP Server Runner
+	{
+		ln, _ := net.Listen("tcp", httpAddr)
+		level.Info(logger).Log("transport", "tcp", "addr", httpAddr)
+		g.Add(func() error {
+			return http.Serve(ln, h)
+		}, func(error) {
 
-	level.Error(logger).Log("exit", <-errs)
+			ln.Close()
+		})
+	}
+
+	defer os.Remove(appName)
+	pid := os.Getpid()
+	ioutil.WriteFile(appName, []byte(fmt.Sprint(pid)), 0644)
+
+	level.Info(logger).Log("msg", "service started", "startuptime", time.Since(startTime))
+	defer level.Info(logger).Log("msg", "service ended")
+
+	level.Error(logger).Log("err", g.Run())
 }

@@ -1,4 +1,5 @@
 @startuml
+skinparam Shadowing false
 
 package "Kubernetes Cluster" {
     database "PostgreSql" as db {
