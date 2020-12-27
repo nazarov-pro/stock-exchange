@@ -13,3 +13,15 @@ type APIResponse struct {
 	Status     string    `json:"status"`
 	Error      *APIError `json:"error,omitempty"`
 }
+
+// APISingleItemResponse single item response
+type APISingleItemResponse struct {
+	Metadata *APIResponse
+	Item     interface{}
+}
+
+// APIMultiItemsResponse many item response
+type APIMultiItemsResponse struct {
+	Metadata *APIResponse
+	Items    interface{}
+}

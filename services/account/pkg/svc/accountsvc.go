@@ -1,4 +1,4 @@
-package impl
+package svc
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"github.com/nazarov-pro/stock-exchange/pkg/util/gen"
 	"github.com/nazarov-pro/stock-exchange/pkg/util/time"
 	"github.com/nazarov-pro/stock-exchange/services/account/pkg/domain"
+	"github.com/nazarov-pro/stock-exchange/services/account/pkg/domain/api"
 	"github.com/nazarov-pro/stock-exchange/services/account/pkg/domain/pb"
 	"github.com/nazarov-pro/stock-exchange/services/account/pkg/kafka"
 	"github.com/nazarov-pro/stock-exchange/services/account/pkg/conf"
@@ -32,7 +33,7 @@ func New(repo domain.Repository, logger log.Logger) domain.Service {
 }
 
 // Register registration opf the account
-func (svc *SimpleService) Register(ctx context.Context, req *domain.RegisterAccountRequest) (*domain.Account, error) {
+func (svc *SimpleService) Register(ctx context.Context, req *api.RegisterAccountRequest) (*domain.Account, error) {
 	logger := log.With(svc.logger, "method", "RegisterAccount")
 	level.Info(logger).Log("username", req.Username, "email", req.Email)
 	acc, err := svc.repository.FindByUsernameOrEmail(ctx, req.Username, req.Email)
@@ -87,7 +88,7 @@ func (svc *SimpleService) Register(ctx context.Context, req *domain.RegisterAcco
 }
 
 // Activate activate account by email and activationCode
-func (svc *SimpleService) Activate(ctx context.Context, req *domain.ActivateAccountRequest) error {
+func (svc *SimpleService) Activate(ctx context.Context, req *api.ActivateAccountRequest) error {
 	logger := log.With(svc.logger, "method", "ActivateAccount")
 	level.Info(logger).Log("email", req.Email, "activationCode", req.ActivationCode)
 	err := svc.repository.UpdateStatus(ctx, req.Email, req.ActivationCode, domain.Registered, domain.Activated)

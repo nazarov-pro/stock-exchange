@@ -20,7 +20,7 @@ import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/nazarov-pro/stock-exchange/services/account/pkg/conf"
 	httptransport "github.com/nazarov-pro/stock-exchange/services/account/pkg/http"
-	accountsvc "github.com/nazarov-pro/stock-exchange/services/account/pkg/impl"
+	"github.com/nazarov-pro/stock-exchange/services/account/pkg/svc"
 	"github.com/nazarov-pro/stock-exchange/services/account/pkg/repo"
 	"github.com/nazarov-pro/stock-exchange/services/account/pkg/transport"
 )
@@ -57,14 +57,14 @@ func main() {
 	}
 
 	// Service Initalization
-	repository, err := repo.New(db, logger)
+	accountRepo, err := repo.New(db, logger)
 	if err != nil {
 		level.Error(logger).Log("err", err)
 		os.Exit(-1)
 	}
-	svc := accountsvc.New(repository, logger)
+	accountSvc := svc.New(accountRepo, logger)
 
-	endpoints := transport.MakeEndpoints(&svc)
+	endpoints := transport.MakeEndpoints(&accountSvc)
 
 	var h http.Handler
 	{

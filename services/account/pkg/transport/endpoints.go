@@ -8,6 +8,7 @@ import (
 	validate "github.com/go-playground/validator/v10"
 	"github.com/nazarov-pro/stock-exchange/pkg/container"
 	"github.com/nazarov-pro/stock-exchange/services/account/pkg/domain"
+	"github.com/nazarov-pro/stock-exchange/services/account/pkg/domain/api"
 )
 
 var (
@@ -82,7 +83,7 @@ func MakeEndpoints(svc *domain.Service) Endpoints {
 
 func makeActivateAccountEndpoint(svc *domain.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(domain.ActivateAccountRequest)
+		req := request.(api.ActivateAccountRequest)
 		err := validator.Struct(req)
 		if err != nil {
 			for _, e := range err.(validate.ValidationErrors) {
@@ -91,7 +92,7 @@ func makeActivateAccountEndpoint(svc *domain.Service) endpoint.Endpoint {
 		}
 		err = (*svc).Activate(ctx, &req)
 		if err == nil {
-			return domain.ActivateAccountResponse{
+			return api.ActivateAccountResponse{
 				APIResponse: &container.APIResponse{
 					Status:     "Your account activated successfully.",
 					Successful: true,
@@ -99,7 +100,7 @@ func makeActivateAccountEndpoint(svc *domain.Service) endpoint.Endpoint {
 			}, nil
 		}
 
-		return domain.ActivateAccountResponse{
+		return api.ActivateAccountResponse{
 			APIResponse: &container.APIResponse{
 				Status:     "Operation was failed",
 				Successful: false,
@@ -114,7 +115,7 @@ func makeActivateAccountEndpoint(svc *domain.Service) endpoint.Endpoint {
 
 func makeRegisterAccountEndpoint(svc *domain.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(domain.RegisterAccountRequest)
+		req := request.(api.RegisterAccountRequest)
 		err := validator.Struct(req)
 		if err != nil {
 			for _, e := range err.(validate.ValidationErrors) {
@@ -124,14 +125,14 @@ func makeRegisterAccountEndpoint(svc *domain.Service) endpoint.Endpoint {
 
 		_, err = (*svc).Register(ctx, &req)
 		if err == nil {
-			return domain.RegisterAccountResponse{
+			return api.RegisterAccountResponse{
 				APIResponse: &container.APIResponse{
 					Status:     "Activation link will be send the email.",
 					Successful: true,
 				},
 			}, nil
 		}
-		return domain.RegisterAccountResponse{
+		return api.RegisterAccountResponse{
 			APIResponse: &container.APIResponse{
 				Status:     "Operation was failed",
 				Successful: false,

@@ -3,6 +3,7 @@ module github.com/nazarov-pro/stock-exchange
 go 1.14
 
 require (
+	cloud.google.com/go v0.46.3
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-kit/kit v0.10.0
 	github.com/go-playground/validator/v10 v10.4.1

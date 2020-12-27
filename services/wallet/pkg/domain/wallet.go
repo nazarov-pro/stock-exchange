@@ -2,8 +2,14 @@ package domain
 
 import (
 	"context"
+	"errors"
+)
 
-	"github.com/nazarov-pro/stock-exchange/services/wallet/pkg/domain/api"
+var (
+	//ErrWalletNotFount - wallet not found
+	ErrWalletNotFount = errors.New("Not any wallet found")
+	//ErrWalletTransNotFount - wallet not found
+	ErrWalletTransNotFount = errors.New("Not any wallet transactions found")
 )
 
 //WalletStatus - defines status of the wallet
@@ -87,6 +93,7 @@ type WalletTransaction struct {
 	Status         WalletTransactionStatus
 	Amount         float64
 	CurrencyCode   string
+	Version        string
 	CreatedDate    int64
 	LastUpdateDate int64
 }
@@ -119,24 +126,24 @@ type WalletOperation struct {
 
 //WalletRepository - wallet reposittory
 type WalletRepository interface {
-	FindByID(ctx context.Context, ID uint64) (Wallet, error)
-	FindByAccountID(ctx context.Context, accountID uint64) ([]Wallet, error)
-	FindByIDandAccountID(ctx context.Context, ID uint64, accountID uint64) (Wallet, error)
+	FindByID(ctx context.Context, ID uint64) (*Wallet, error)
+	FindByAccountID(ctx context.Context, accountID uint64) (*[]Wallet, error)
+	FindByIDAndAccountID(ctx context.Context, ID uint64, accountID uint64) (*Wallet, error)
 
 	Save(ctx context.Context, wallet *Wallet) error
-	UpdateBalance(ctx context.Context, wallet *Wallet, newVersion string, newBalance int64) error
-	UpdateStatus(ctx context.Context, wallet *Wallet, newVersion string, newStatus WalletStatus) error
+	UpdateBalance(ctx context.Context, wallet *Wallet, newVersion string, newBalance float64, updateDate int64) error
+	UpdateStatus(ctx context.Context, wallet *Wallet, newVersion string, newStatus WalletStatus, updateDate int64) error
 }
 
 //WalletTransactionRepository - wallet transaction reposittory
 type WalletTransactionRepository interface {
-	FindByID(ctx context.Context, ID uint64) (WalletTransaction, error)
-	FindByWalletID(ctx context.Context, walletID uint64) ([]WalletTransaction, error)
-	FindByAccountID(ctx context.Context, accountID uint64) ([]WalletTransaction, error)
-	FindByIDandAccountID(ctx context.Context, ID uint64, AccountID uint64) (WalletTransaction, error)
+	FindByID(ctx context.Context, ID uint64) (*WalletTransaction, error)
+	FindByWalletID(ctx context.Context, walletID uint64) (*[]WalletTransaction, error)
+	FindByAccountID(ctx context.Context, accountID uint64) (*[]WalletTransaction, error)
+	FindByIDAndAccountID(ctx context.Context, ID uint64, walletID uint64) (*WalletTransaction, error)
 
 	Save(ctx context.Context, walletTransaction *WalletTransaction) error
-	UpdateStatus(ctx context.Context, ID uint64, newStatus WalletTransactionStatus) error
+	UpdateStatus(ctx context.Context, walletTransaction *WalletTransaction, newStatus WalletTransactionStatus, newVersion string, updateDate int64) error
 }
 
 //WalletOperationRepository - wallet operation element
@@ -146,11 +153,11 @@ type WalletOperationRepository interface {
 
 // WalletService - all wallet related stuff in here
 type WalletService interface {
-	GetWalletsByAccountId(ctx context.Context, accountID uint64) ([]api.WalletResponse, error)
-	GetWalletTransactionsByAccountID(ctx context.Context, accountID uint64) ([]api.WalletTransactionResponse, error)
-	GetWalletByIdAndAccountId(ctx context.Context, walletID uint64, accountID uint64) (api.WalletResponse, error)
+	GetWalletsByAccountID(ctx context.Context, accountID uint64) (*[]WalletResponse, error)
+	GetWalletTransactionsByAccountID(ctx context.Context, accountID uint64) (*[]WalletTransactionResponse, error)
+	GetWalletByIDAndAccountID(ctx context.Context, walletID uint64, accountID uint64) (*WalletResponse, error)
 
-	Create(ctx context.Context, req api.WalletCreationRequest) (api.WalletResponse, error)
-	Credit(ctx context.Context, req api.WalletCreditRequest) (api.WalletResponse, error)
-	Debit(ctx context.Context, req api.WalletDebitRequest) (api.WalletResponse, error)
+	Create(ctx context.Context, req *WalletCreationRequest) (*WalletResponse, error)
+	Credit(ctx context.Context, req *WalletCreditRequest) (*WalletResponse, error)
+	Debit(ctx context.Context, req *WalletDebitRequest) (*WalletResponse, error)
 }

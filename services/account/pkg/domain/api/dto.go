@@ -1,4 +1,4 @@
-package domain
+package api
 
 import (
 	"github.com/nazarov-pro/stock-exchange/pkg/container"

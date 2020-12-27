@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"errors"
+	"github.com/nazarov-pro/stock-exchange/services/account/pkg/domain/api"
 )
 
 var (
@@ -55,8 +56,8 @@ type Repository interface {
 
 // Service - Registration, Resetting password and activating account
 type Service interface {
-	Register(ctx context.Context, req* RegisterAccountRequest) (*Account, error)
+	Register(ctx context.Context, req* api.RegisterAccountRequest) (*Account, error)
 
-	Activate(ctx context.Context, req* ActivateAccountRequest) error
+	Activate(ctx context.Context, req* api.ActivateAccountRequest) error
 	// Reset password and activate/deactivate/suspend/delete 
 }
