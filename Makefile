@@ -28,6 +28,8 @@ downgrade-db-email:
 compile-email-pb:
 	protoc -I="./services/email-sender/domain/pb" --go_out=./ ./services/email-sender/domain/pb/email.proto
 
+start-wallet:
+	CONFIG_FILE="./services/wallet/config-sensitive.yaml" go run "github.com/nazarov-pro/stock-exchange/services/wallet/cmd"
 
 upgrade-db-wallet:
 	migrate -verbose -path "./services/wallet/db/migrations" -database "postgresql://postgres:secret@localhost:5432/postgres?sslmode=disable&x-migrations-table=wallet_migrations" up

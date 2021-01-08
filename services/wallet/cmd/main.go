@@ -18,11 +18,11 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"github.com/nazarov-pro/stock-exchange/services/account/pkg/conf"
-	httptransport "github.com/nazarov-pro/stock-exchange/services/account/pkg/http"
-	"github.com/nazarov-pro/stock-exchange/services/account/pkg/svc"
-	"github.com/nazarov-pro/stock-exchange/services/account/pkg/repo"
-	"github.com/nazarov-pro/stock-exchange/services/account/pkg/transport"
+	"github.com/nazarov-pro/stock-exchange/services/wallet/pkg/conf"
+	httptransport "github.com/nazarov-pro/stock-exchange/services/wallet/pkg/http"
+	"github.com/nazarov-pro/stock-exchange/services/wallet/pkg/repo"
+	"github.com/nazarov-pro/stock-exchange/services/wallet/pkg/svc"
+	"github.com/nazarov-pro/stock-exchange/services/wallet/pkg/transport"
 )
 
 var startTime = time.Now()
@@ -50,21 +50,20 @@ func main() {
 		)
 	}
 
-	db, err := conf.ConnectDb()
-	if err != nil {
-		level.Error(logger).Log("err", err)
-		os.Exit(1)
+	var endpoints transport.Endpoints
+	{
+		db, err := conf.ConnectDb()
+		if err != nil {
+			level.Error(logger).Log("err", err)
+			os.Exit(-1)
+		}
+		walletRepo := repo.NewWalletRepo(db, logger)
+		walletTransactionRepo := repo.NewWalletTransactionRepo(db, logger)
+		walletOperationRepo := repo.NewWalletOperationRepo(db, logger)
+		transactionManager := conf.NewTransactionManager(db, logger)
+		walletSvc := svc.NewWalletSvc(walletRepo, walletTransactionRepo, walletOperationRepo, transactionManager, logger)
+		endpoints = transport.MakeEndpoints(&walletSvc)
 	}
-
-	// Service Initalization
-	accountRepo, err := repo.New(db, logger)
-	if err != nil {
-		level.Error(logger).Log("err", err)
-		os.Exit(-1)
-	}
-	accountSvc := svc.New(accountRepo, logger)
-
-	endpoints := transport.MakeEndpoints(&accountSvc)
 
 	var h http.Handler
 	{

@@ -19,10 +19,10 @@ func NewWalletRepo(db *sql.DB, logger log.Logger) domain.WalletRepository {
 }
 
 func (repo *walletRepo) FindByID(ctx context.Context, ID uint64) (*domain.Wallet, error) {
-	sqlQuery := `SELECT "W"."ID", "W"."ACCOUNT_ID", "W"."BALANCE", "W"."CURRENCY_CODE","W"."STATUS", "W"."CREATED_DATE", "W"."LAST_UPDATE_DATE" FROM "WALLET"."WALLETS" "W" WHERE "W"."ID"=$1`
+	sqlQuery := `SELECT "W"."ID", "W"."ACCOUNT_ID", "W"."VERSION", "W"."BALANCE", "W"."CURRENCY_CODE","W"."STATUS", "W"."CREATED_DATE", COALESCE("W"."LAST_UPDATE_DATE", 0) FROM "WALLET"."WALLETS" "W" WHERE "W"."ID"=$1`
 	sqlRow := repo.db.QueryRowContext(ctx, sqlQuery, ID)
 	var wallet domain.Wallet
-	err := sqlRow.Scan(&wallet.ID, &wallet.AccountID, &wallet.Balance, &wallet.CurrencyCode, &wallet.Status, &wallet.CreatedDate, &wallet.LastUpdateDate)
+	err := sqlRow.Scan(&wallet.ID, &wallet.AccountID, &wallet.Version, &wallet.Balance, &wallet.CurrencyCode, &wallet.Status, &wallet.CreatedDate, &wallet.LastUpdateDate)
 	switch err {
 	case sql.ErrNoRows:
 		return nil, domain.ErrWalletNotFount
@@ -34,7 +34,7 @@ func (repo *walletRepo) FindByID(ctx context.Context, ID uint64) (*domain.Wallet
 }
 
 func (repo *walletRepo) FindByAccountID(ctx context.Context, accountID uint64) (*[]domain.Wallet, error) {
-	sqlQuery := `SELECT "W"."ID", "W"."ACCOUNT_ID", "W"."BALANCE", "W"."CURRENCY_CODE","W"."STATUS", "W"."CREATED_DATE", "W"."LAST_UPDATE_DATE" FROM "WALLET"."WALLETS" "W" WHERE "W"."ACCOUNT_ID"=$1`
+	sqlQuery := `SELECT "W"."ID", "W"."ACCOUNT_ID", "W"."VERSION", "W"."BALANCE", "W"."CURRENCY_CODE","W"."STATUS", "W"."CREATED_DATE", COALESCE("W"."LAST_UPDATE_DATE", 0) FROM "WALLET"."WALLETS" "W" WHERE "W"."ACCOUNT_ID"=$1`
 	sqlRows, err := repo.db.QueryContext(ctx, sqlQuery, accountID)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (repo *walletRepo) FindByAccountID(ctx context.Context, accountID uint64) (
 	wallets := make([]domain.Wallet, 0)
 	for sqlRows.Next() {
 		var wallet domain.Wallet
-		err = sqlRows.Scan(&wallet.ID, &wallet.AccountID, &wallet.Balance, &wallet.CurrencyCode, &wallet.Status, &wallet.CreatedDate, &wallet.LastUpdateDate)
+		err = sqlRows.Scan(&wallet.ID, &wallet.AccountID, &wallet.Version, &wallet.Balance, &wallet.CurrencyCode, &wallet.Status, &wallet.CreatedDate, &wallet.LastUpdateDate)
 		if err != nil {
 			return nil, err
 		}
@@ -62,10 +62,10 @@ func (repo *walletRepo) FindByAccountID(ctx context.Context, accountID uint64) (
 }
 
 func (repo *walletRepo) FindByIDAndAccountID(ctx context.Context, ID uint64, accountID uint64) (*domain.Wallet, error) {
-	sqlQuery := `SELECT "W"."ID", "W"."ACCOUNT_ID", "W"."BALANCE", "W"."CURRENCY_CODE","W"."STATUS", "W"."CREATED_DATE", "W"."LAST_UPDATE_DATE" FROM "WALLET"."WALLETS" "W" WHERE "W"."ID"=$1 AND "W"."ACCOUNT_ID"=$2`
+	sqlQuery := `SELECT "W"."ID", "W"."ACCOUNT_ID", "W"."VERSION", "W"."BALANCE", "W"."CURRENCY_CODE","W"."STATUS", "W"."CREATED_DATE", COALESCE("W"."LAST_UPDATE_DATE", 0) FROM "WALLET"."WALLETS" "W" WHERE "W"."ID"=$1 AND "W"."ACCOUNT_ID"=$2`
 	sqlRow := repo.db.QueryRowContext(ctx, sqlQuery, ID, accountID)
 	var wallet domain.Wallet
-	err := sqlRow.Scan(&wallet.ID, &wallet.AccountID, &wallet.Balance, &wallet.CurrencyCode, &wallet.Status, &wallet.CreatedDate, &wallet.LastUpdateDate)
+	err := sqlRow.Scan(&wallet.ID, &wallet.AccountID, &wallet.Version, &wallet.Balance, &wallet.CurrencyCode, &wallet.Status, &wallet.CreatedDate, &wallet.LastUpdateDate)
 	switch err {
 	case sql.ErrNoRows:
 		return nil, domain.ErrWalletNotFount
@@ -77,22 +77,73 @@ func (repo *walletRepo) FindByIDAndAccountID(ctx context.Context, ID uint64, acc
 }
 
 func (repo *walletRepo) Save(ctx context.Context, wallet *domain.Wallet) error {
-	sqlQuery := `INSERT INTO "WALLET"."WALLETS"("ID", "ACCOUNT_ID", "BALANCE", "CURRENCY_CODE", "STATUS", "VERSION", "CREATED_DATE") values (nextval('"WALLET"."WALLETS_ID_SEQ"'), $1, $2, $3, $4, $5, $6) RETURNING "ID"`
-	sqlRow := repo.db.QueryRowContext(ctx, sqlQuery, wallet.AccountID, wallet.Balance, wallet.CurrencyCode, wallet.Status, wallet.Version, wallet.CreatedDate)
-	err := sqlRow.Scan(&wallet.ID)
-	return err
+	tx := ctx.Value("tx").(*sql.Tx)
+	id, err := repo.generateID(ctx)
+	if err != nil {
+		return err
+	}
+	wallet.ID = id
+
+	sqlQuery := `INSERT INTO "WALLET"."WALLETS"("ID", "ACCOUNT_ID", "BALANCE", "CURRENCY_CODE", "STATUS", "VERSION", "CREATED_DATE") values ($1, $2, $3, $4, $5, $6, $7)`
+	result, err := tx.ExecContext(ctx, sqlQuery, wallet.ID, wallet.AccountID, wallet.Balance, wallet.CurrencyCode, wallet.Status, wallet.Version, wallet.CreatedDate)
+	if err != nil {
+		return err
+	}
+	affectedRows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affectedRows > 0 {
+		return nil
+	}
+	return domain.ErrNoAffectedRows
 }
 
-func (repo *walletRepo) UpdateBalance(ctx context.Context, wallet *domain.Wallet, newVersion string, newBalance float64, updateDate int64) error {
-	sqlQuery := `UPDATE "WALLET"."WALLETS" SET "BALANCE"=$1, "VERSION"=$2, "LAST_UPDATE_DATE"=$3 WHERE "ID"=$4 AND "ACCOUNT_ID"=$5 AND "VERSION"=$6 RETURNING "BALANCE", "VERSION", "LAST_UPDATE_DATE"`
-	sqlRow := repo.db.QueryRowContext(ctx, sqlQuery, newBalance, newVersion, updateDate, wallet.ID, wallet.AccountID, wallet.Version)
-	err := sqlRow.Scan(&wallet.Balance, &wallet.Version, &wallet.LastUpdateDate)
-	return err
+func (repo *walletRepo) UpdateBalance(ctx context.Context, wallet *domain.Wallet, newVersion string, newBalance int64, updateDate int64) error {
+	tx := ctx.Value("tx").(*sql.Tx)
+	sqlQuery := `UPDATE "WALLET"."WALLETS" SET "BALANCE"=$1, "VERSION"=$2, "LAST_UPDATE_DATE"=$3 WHERE "ID"=$4 AND "ACCOUNT_ID"=$5 AND "VERSION"=$6`
+	result, err := tx.ExecContext(ctx, sqlQuery, newBalance, newVersion, updateDate, wallet.ID, wallet.AccountID, wallet.Version)
+	if err != nil {
+		return err
+	}
+	affectedRows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affectedRows > 0 {
+		wallet.Balance = newBalance
+		wallet.LastUpdateDate = updateDate
+		wallet.Version = newVersion
+		return nil
+	}
+	return domain.ErrNoAffectedRows
 }
 
 func (repo *walletRepo) UpdateStatus(ctx context.Context, wallet *domain.Wallet, newVersion string, newStatus domain.WalletStatus, updateDate int64) error {
-	sqlQuery := `UPDATE "WALLET"."WALLETS" SET "STATUS"=$1, "VERSION"=$2, "LAST_UPDATE_DATE"=$3 WHERE "ID"=$4 AND "ACCOUNT_ID"=$5 AND "VERSION"=$6 RETURNING "STATUS", "VERSION", "LAST_UPDATE_DATE"`
-	sqlRow := repo.db.QueryRowContext(ctx, sqlQuery, newStatus, newVersion, updateDate, wallet.ID, wallet.AccountID, wallet.Version)
-	err := sqlRow.Scan(&wallet.Status, &wallet.Version, &wallet.LastUpdateDate)
-	return err
+	tx := ctx.Value("tx").(*sql.Tx)
+	sqlQuery := `UPDATE "WALLET"."WALLETS" SET "STATUS"=$1, "VERSION"=$2, "LAST_UPDATE_DATE"=$3 WHERE "ID"=$4 AND "ACCOUNT_ID"=$5 AND "VERSION"=$6`
+	result, err := tx.ExecContext(ctx, sqlQuery, newStatus, newVersion, updateDate, wallet.ID, wallet.AccountID, wallet.Version)
+	if err != nil {
+		return err
+	}
+	affectedRows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affectedRows > 0 {
+		wallet.Status = newStatus
+		wallet.LastUpdateDate = updateDate
+		wallet.Version = newVersion
+		return nil
+	}
+	return domain.ErrNoAffectedRows
+
+}
+
+func (repo *walletRepo) generateID(ctx context.Context) (uint64, error) {
+	sqlQuery := `SELECT nextval('"WALLET"."WALLETS_ID_SEQ"')`
+	sqlRow := repo.db.QueryRowContext(ctx, sqlQuery)
+	var id uint64
+	err := sqlRow.Scan(&id)
+	return id, err
 }

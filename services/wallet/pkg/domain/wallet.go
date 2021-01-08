@@ -7,9 +7,11 @@ import (
 
 var (
 	//ErrWalletNotFount - wallet not found
-	ErrWalletNotFount = errors.New("Not any wallet found")
+	ErrWalletNotFount = errors.New("not any wallet found")
 	//ErrWalletTransNotFount - wallet not found
-	ErrWalletTransNotFount = errors.New("Not any wallet transactions found")
+	ErrWalletTransNotFount = errors.New("not any wallet transactions found")
+	//ErrNoAffectedRows - not any rows updated
+	ErrNoAffectedRows = errors.New("not any rows updated")
 )
 
 //WalletStatus - defines status of the wallet
@@ -41,7 +43,7 @@ type Currency struct {
 type Wallet struct {
 	ID             uint64
 	AccountID      uint64
-	Balance        float64
+	Balance        int64
 	CurrencyCode   string
 	Status         WalletStatus
 	Version        string
@@ -91,7 +93,7 @@ type WalletTransaction struct {
 	ReferenceID    string // uuid or other identifier input
 	Type           WalletTransactionType
 	Status         WalletTransactionStatus
-	Amount         float64
+	Amount         int64
 	CurrencyCode   string
 	Version        string
 	CreatedDate    int64
@@ -102,16 +104,16 @@ type WalletTransaction struct {
 type WalletOperationType int8
 
 const (
-	//WohtUnknown - unknown transaction
-	WohtUnknown WalletOperationType = iota
-	//WohtCreation - wallet creation
-	WohtCreation
-	//WohtDebit - debit transaction
-	WohtDebit
-	//WohtCredit - credit transaction
-	WohtCredit
-	//WohtStatus - status change transaction
-	WohtStatus
+	//WotUnknown - unknown transaction
+	WotUnknown WalletOperationType = iota
+	//WotCreation - wallet creation
+	WotCreation
+	//WotDebit - debit transaction
+	WotDebit
+	//WotCredit - credit transaction
+	WotCredit
+	//WotStatus - status change transaction
+	WotStatus
 )
 
 //WalletOperation stores all operation
@@ -131,7 +133,7 @@ type WalletRepository interface {
 	FindByIDAndAccountID(ctx context.Context, ID uint64, accountID uint64) (*Wallet, error)
 
 	Save(ctx context.Context, wallet *Wallet) error
-	UpdateBalance(ctx context.Context, wallet *Wallet, newVersion string, newBalance float64, updateDate int64) error
+	UpdateBalance(ctx context.Context, wallet *Wallet, newVersion string, newBalance int64, updateDate int64) error
 	UpdateStatus(ctx context.Context, wallet *Wallet, newVersion string, newStatus WalletStatus, updateDate int64) error
 }
 

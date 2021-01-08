@@ -95,7 +95,6 @@ func SendEmail(emailMessage *pb.SendEmail) (string, error) {
 	if err != nil {
 		return from.Address, err
 	}
-
-	c.Quit()
-	return from.Address, nil
+	
+	return from.Address, c.Quit()
 }

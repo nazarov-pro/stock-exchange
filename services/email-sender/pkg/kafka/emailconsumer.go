@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 	"github.com/nazarov-pro/stock-exchange/services/email-sender/pkg/conf"
 	"github.com/nazarov-pro/stock-exchange/services/email-sender/pkg/domain/pb"
 	"github.com/nazarov-pro/stock-exchange/services/email-sender/pkg/domain"

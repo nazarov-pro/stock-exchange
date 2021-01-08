@@ -28,10 +28,25 @@
 					"CONFIG_FILE": "${workspaceFolder}/services/email-sender/config-sensitive.yaml"
 				},
 				"args": []
+			},
+			{
+				"name": "Launch Wallet Service",
+				"type": "go",
+				"request": "launch",
+				"mode": "auto",
+				"program": "${workspaceFolder}/services/wallet/cmd/main.go",
+				"env": {
+					"CONFIG_FILE": "${workspaceFolder}/services/wallet/config-sensitive.yaml"
+				},
+				"args": []
 			}
 		]
 	},
 	"settings": {
+		"go.lintTool": "golangci-lint",
+		"go.lintFlags": [
+			"--fast"
+		],
 		"go.delveConfig": {
 			"dlvLoadConfig": {
 				"maxStringLen": 1024,
