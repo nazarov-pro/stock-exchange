@@ -8,8 +8,14 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secret
+    networks: [exchange]
     volumes:
       - exchange_db_data:/var/lib/postgresql/data
+
+networks:
+  exchange:
+    external:
+      name: exchange_net
 
 volumes:
   exchange_db_data:

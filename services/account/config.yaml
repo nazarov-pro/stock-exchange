@@ -15,7 +15,7 @@ db:
   name: "postgres"
   username: "postgres"
   password: "secret"
-
+  sslmode: "disable"
 kafka:
   topics:
     email-send: "email"

@@ -1,5 +1,8 @@
+init:
+	@docker network create exchange_net || true
+
 start-account:
-	@CONFIG_FILE="./services/account/config-sensitive.yaml" go run "github.com/nazarov-pro/stock-exchange/services/account/cmd"
+	@CONFIG_FILE="./services/account/config.yaml" go run "github.com/nazarov-pro/stock-exchange/services/account/cmd"
 
 stop-account:
 	kill -15 $(cat Account)
@@ -50,7 +53,7 @@ stop-kafka:
 	docker-compose -f configs/docker/kafka-compose.yaml down
 
 start-external: start-db start-kafka
-	echo "DB & KAFKA STARTED"
+	@echo "DB & KAFKA STARTED"
 
 stop-external: stop-db stop-kafka
-	echo "DB & KAFKA STOPPED"
+	@echo "DB & KAFKA STOPPED"

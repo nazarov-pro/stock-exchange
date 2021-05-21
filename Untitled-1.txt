@@ -1,0 +1,73 @@
+export ZSH="/Users/shahin/.oh-my-zsh"
+
+ZSH_THEME="robbyrussell"
+
+plugins=(
+ git
+ osx
+ zsh-autosuggestions
+ web-search
+ history
+ z
+)
+
+setopt correct
+## unsetopt correct for disabling
+
+source $ZSH/oh-my-zsh.sh
+source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+
+## Aliases for git
+function gnfb { git checkout -b "feature/$1" }
+function gnbb { git checkout -b "bugfix/$1" }
+
+## Aliases for docker
+alias d=docker
+
+## Aliases for k8s
+alias k=kubectl
+alias kctx="kubectl config use-context"
+alias kctxa="kubectl config get-contexts"
+alias kns="kubectl config set-context --current --namespace"
+function klogs { kubectl logs $1 -f --tail=${2:-100} }
+function ksecret { kubectl get secret $1 -o go-template='{{range $k,$v := .data}}{{$k}}={{$v|base64decode}}{{"\n"}}{{end}}' }
+alias kevt="kubectl get events --sort-by=.metadata.creationTimestamp"
+alias kpo="kubectl get po -o wide"
+source <(kubectl completion zsh)
+
+## BETTECH CONFIGURATIONS
+#source /Users/shahin/config/bettech/fintech-test-server.sh
+#source /Users/shahin/config/bettech/hetzner-prod.sh
+#source /Users/shahin/config/bettech/hetzner-with-risk-prod.sh
+source /Users/shahin/config/bettech/bettech-hetzner.sh
+export BUILD_NUMBER=0
+
+## GO CONFIGURATION
+export GOROOT="/usr/local/go"
+export GOPATH="/Users/shahin/projects/go"
+export PATH=$PATH:$GOPATH/bin
+
+## JAVA CONFIGURATIONS
+## /usr/libexec/java_home -V (Get all installed java versions)
+export JAVA_HOME=`/usr/libexec/java_home -v 11`
+# export JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk1.8.0_251.jdk/Contents/Home"
+
+
+## Python CONFIGURATIONS
+alias python="/usr/local/bin/python3.8"
+alias pip="/usr/local/bin/pip3.8"
+
+## Openshift Client
+export PATH=$PATH:/Users/shahin/config/iba/exec
+
+## Make Conf manager
+function mk { make $2 -f ~/config/${1}/Makefile}
+
+
+## Automation :)
+source ~/config/default/ocp.sh
+
+#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+export SDKMAN_DIR="/Users/shahin/.sdkman"
+[[ -s "/Users/shahin/.sdkman/bin/sdkman-init.sh" ]] && source "/Users/shahin/.sdkman/bin/sdkman-init.sh"
