@@ -1,0 +1,6 @@
+profile: "dev"
+kafka:
+  producer:
+    brokerUrls: ["localhost:9092"]
+  consumer:
+    brokerUrls: ["localhost:9092"]

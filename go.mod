@@ -17,5 +17,6 @@ require (
 	github.com/segmentio/kafka-go v0.4.8
 	github.com/spf13/viper v1.7.1
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7
 	google.golang.org/protobuf v1.25.0
 )
