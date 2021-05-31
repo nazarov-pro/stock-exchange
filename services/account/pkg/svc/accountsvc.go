@@ -82,8 +82,12 @@ func (svc *SimpleService) Register(ctx context.Context, req *api.RegisterAccount
 		return nil, err
 	}
 
-	go kafka.SendEmail(acc.Email, data)
-
+	err = kafka.SendEmail(acc.Email, data)
+	if err != nil {
+		level.Error(logger).Log("err", err)
+		return nil, err
+	}
+	
 	return acc, nil
 }
 

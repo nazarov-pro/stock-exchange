@@ -1,7 +1,7 @@
 version: "3"
 services:
-  exchange_db:
-    container_name: exchange_db
+  exchange-db:
+    container_name: exchange-db
     image: postgres:12
     ports:
       - "5432:5432"
@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: secret
     networks: [exchange]
     volumes:
-      - exchange_db_data:/var/lib/postgresql/data
+      - exchange-db-data:/var/lib/postgresql/data
 
 networks:
   exchange:
@@ -18,5 +18,5 @@ networks:
       name: exchange_net
 
 volumes:
-  exchange_db_data:
+  exchange-db-data:
     driver: local

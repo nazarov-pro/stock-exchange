@@ -1,23 +1,29 @@
 profile: "dev"
 
+server:
+  port: 8080
+  hostname: 0.0.0.0
+
 app:
-  name: "Email_Sender"
+  id: "wallet"
+  name: "Wallet"
 
 db:
-  host: "localhost"
+  host: "exchange-db"
   port: 5432
-  user: "postgres"
+  name: "postgres"
+  username: "postgres"
   password: "secret"
-  database: "postgres"
-
+  sslmode: "disable"
+  
 kafka:
   admin:
     network: "tcp"
-    address: "localhost:9092"
+    address: "kafka:19092"
   producer:
-    brokerUrls: ["localhost:9092"]
+    brokerUrls: ["kafka:19092"]
   consumer:
-    brokerUrls: ["localhost:9092"]
+    brokerUrls: ["kafka:19092"]
 
 mail:
   sender:

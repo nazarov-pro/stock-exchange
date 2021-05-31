@@ -43,6 +43,7 @@ func (consumer emailConsumer) Consume(ctx context.Context) error {
 			status := domain.Sent
 			sender, err := consumer.svc.Send(ctx, &msg)
 			if err != nil {
+				fmt.Printf("Something went wrong err: %v\n", err)
 				status = domain.Failed
 			}
 

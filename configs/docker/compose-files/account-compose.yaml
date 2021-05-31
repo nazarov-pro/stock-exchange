@@ -1,0 +1,13 @@
+version: "3"
+services:
+  ms-account:
+    container_name: ms-account
+    image: ms-account:latest
+    ports:
+      - "8080:8080"
+    networks: [exchange]
+
+networks:
+  exchange:
+    external:
+      name: exchange_net

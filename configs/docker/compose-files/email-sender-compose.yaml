@@ -1,0 +1,13 @@
+version: "3"
+services:
+  ms-email-sender:
+    container_name: ms-email-sender
+    image: ms-email-sender:latest
+    ports:
+      - "8081:8080"
+    networks: [exchange]
+
+networks:
+  exchange:
+    external:
+      name: exchange_net

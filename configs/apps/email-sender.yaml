@@ -1,0 +1,31 @@
+profile: "dev"
+
+app:
+  id: "email_sender"
+  name: "Email_Sender"
+
+db:
+  host: "exchange-db"
+  port: 5432
+  name: "postgres"
+  username: "postgres"
+  password: "secret"
+  sslmode: "disable"
+
+kafka:
+  admin:
+    network: "tcp"
+    address: "kafka:19092"
+  producer:
+    brokerUrls: ["kafka:19092"]
+  consumer:
+    brokerUrls: ["kafka:19092"]
+
+mail:
+  sender:
+    name: "Stock Exchange APP"
+    email: "payday@shahinnazarov.com"
+  smtp:
+    server: "smtp.yandex.com:465"
+    username: "payday@shahinnazarov.com"
+    password: "ufkmoxsrmwdoaazb"

@@ -1,0 +1,29 @@
+profile: "dev"
+
+server:
+  port: 8080
+  hostname: 0.0.0.0
+
+app:
+  id: "account"
+  name: "Account"
+  productName: "Stock Exchange"
+  activationLinkBaseUri: "http://localhost:8080"
+
+db:
+  host: "exchange-db"
+  port: 5432
+  name: "postgres"
+  username: "postgres"
+  password: "secret"
+  sslmode: "disable"
+kafka:
+  topics:
+    email-send: "email"
+  admin:
+    network: "tcp"
+    address: "kafka:19092"
+  producer:
+    brokerUrls: ["kafka:19092"]
+  consumer:
+    brokerUrls: ["kafka:19092"]
