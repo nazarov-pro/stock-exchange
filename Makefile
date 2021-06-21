@@ -26,7 +26,6 @@ compile-account-pb:
 	protoc -I="./services/account/pkg/domain/pb" --go_out=./ ./services/account/pkg/domain/pb/email.proto
 
 
-
 docker-build-email-sender:
 	@docker build --network=host -f configs/docker/email-sender.dockerfile --build-arg DB_HOST_ARG=127.0.0.1 -t ms-email-sender:latest .
 
@@ -51,7 +50,8 @@ downgrade-db-email:
 compile-email-pb:
 	protoc -I="./services/email-sender/domain/pb" --go_out=./ ./services/email-sender/domain/pb/email.proto
 
-
+start-finnhub:
+	CONFIG_FILE="./services/finnhub-feed-service/config-sensitive.yaml" go run "github.com/nazarov-pro/stock-exchange/services/finnhub-feed-service/cmd"
 
 docker-build-wallet:
 	@docker build --network=host -f configs/docker/wallet.dockerfile --build-arg DB_HOST_ARG=127.0.0.1 -t ms-wallet:latest .
@@ -70,10 +70,6 @@ upgrade-db-wallet:
 
 downgrade-db-wallet:
 	migrate -verbose -path "./services/wallet/db/migrations" -database "postgresql://postgres:secret@localhost:5432/postgres?sslmode=disable&x-migrations-table=wallet_migrations" down
-
-
-
-
 
 start-db:
 	docker-compose -f configs/docker/compose-files/postgresql-compose.yaml up -d
@@ -99,3 +95,7 @@ start-external: start-db start-kafka
 
 stop-external: stop-db stop-kafka
 	@echo "DB & KAFKA STOPPED"
+
+start: start-external start-internal
+
+stop: stop-internal stop-external
